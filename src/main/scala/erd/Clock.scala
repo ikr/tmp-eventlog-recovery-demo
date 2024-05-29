@@ -1,11 +1,10 @@
 package erd
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.util.Timeout
 
-import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
 object Clock {
@@ -17,7 +16,7 @@ object Clock {
   def apply(observer: ActorRef[MemorizingEcho.Signal]): Behavior[Message] = setup(observer)
 
   private def setup(observer: ActorRef[MemorizingEcho.Signal]): Behavior[Message] = Behaviors.withTimers { timers =>
-    timers.startTimerWithFixedDelay(Tick, FiniteDuration(8, TimeUnit.SECONDS))
+    timers.startTimerWithFixedDelay(Tick, 10.seconds)
     receive(observer)
   }
 
@@ -25,7 +24,7 @@ object Clock {
     (context, message) =>
       message match {
         case Tick =>
-          given Timeout = Timeout(2, TimeUnit.SECONDS)
+          given Timeout = Timeout(2.seconds)
           context.ask[MemorizingEcho.Signal, MemorizingEcho.Reply](
             observer,
             me => MemorizingEcho.Signal(System.currentTimeMillis().toString, me)

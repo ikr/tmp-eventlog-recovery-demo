@@ -1,8 +1,11 @@
 package erd
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
+
+import scala.concurrent.duration.DurationInt
 
 object MemorizingEcho {
   private sealed trait Event
@@ -15,12 +18,17 @@ object MemorizingEcho {
 
   private final case class State(history: Seq[String])
 
-  def apply(): Behavior[Command] =
-    EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId.ofUniqueId("observer"),
-      emptyState = State(Seq()),
-      commandHandler = commandHandler,
-      eventHandler = eventHandler
+  def apply(): Behavior[Command] = Behaviors
+    .supervise(
+      EventSourcedBehavior[Command, Event, State](
+        persistenceId = PersistenceId.ofUniqueId("observer"),
+        emptyState = State(Seq()),
+        commandHandler = commandHandler,
+        eventHandler = eventHandler
+      )
+    )
+    .onFailure(
+      SupervisorStrategy.restartWithBackoff(minBackoff = 4.seconds, maxBackoff = 5.minutes, randomFactor = 0.2)
     )
 
   private def commandHandler: EventSourcedBehavior.CommandHandler[Command, Event, State] = (state, command) =>
