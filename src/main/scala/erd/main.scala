@@ -4,20 +4,38 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.ConfigFactory
 
-object MemorizingEcho {
-  final case class Request(text: String, replyTo: ActorRef[Response])
-  final case class Response(text: String)
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
-  def apply(): Behavior[Request] = Behaviors.receive { (context, message) =>
+object MemorizingEcho {
+  final case class Signal(text: String, replyTo: ActorRef[Reply])
+  final case class Reply(text: String)
+
+  def apply(): Behavior[Signal] = Behaviors.receive { (context, message) =>
     context.log.debug("Got {}", message.text)
-    message.replyTo ! Response(message.text)
+    message.replyTo ! Reply(message.text)
+    Behaviors.same
+  }
+}
+
+object Clock {
+  case object Tick
+
+  def apply(): Behavior[Tick.type] = setup()
+
+  private def setup(): Behavior[Tick.type] = Behaviors.withTimers { timers =>
+    timers.startTimerWithFixedDelay(Tick, FiniteDuration(4, TimeUnit.SECONDS))
+    receive()
+  }
+
+  private def receive(): Behavior[Tick.type] = Behaviors.receiveMessage { _ =>
     Behaviors.same
   }
 }
 
 object Root {
   def apply(): Behavior[Unit] = Behaviors.setup { context =>
-    Behaviors.stopped
+    Behaviors.same
   }
 }
 
