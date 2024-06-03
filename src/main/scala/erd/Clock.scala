@@ -33,7 +33,7 @@ object Clock {
             case Failure(exception)                     => ObservationFailure(exception.getMessage)
           }
         case Echo(text)                  => context.log.info(s"Echoed: $text")
-        case ObservationFailure(message) => context.log.error(s"OOPS! $message")
+        case ObservationFailure(message) => context.log.error(s"BOOM! $message")
       }
       Behaviors.same
   }
