@@ -1,24 +1,32 @@
 package erd
 
-import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
-import akka.persistence.jdbc.testkit.scaladsl.SchemaUtils
+import akka.actor.typed.{ActorSystem, Behavior}
 import com.typesafe.config.ConfigFactory
-
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 
 object Root {
   def apply(): Behavior[Unit] = Behaviors.setup { context =>
-    Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 2.seconds)
-    val observer = context.spawn(MemorizingEcho(), "observer")
-    context.spawn(Clock(observer), "clock")
+    context.spawn(ClusterListener(), "ClusterListener")
     Behaviors.same
   }
 }
 
 @main def run(): Unit = {
-  val system   = ActorSystem(Root(), "demo", config = ConfigFactory.load("cluster.conf"))
-  val sharding = ClusterSharding(system)
+  startup("Provider", 0)
+  startup("Provider", 1)
+  startup("Consumer", 2)
+}
+
+def startup(role: String, portDelta: Int): Unit = {
+  val port = 10_000 + portDelta
+  // Override the configuration of the port
+  val config = ConfigFactory
+    .parseString(s"""
+         |akka.cluster.roles = ["$role"]
+         |akka.remote.artery.canonical.port = $port
+         |""".stripMargin)
+    .withFallback(ConfigFactory.load("cluster.conf"))
+
+  // Create an Akka system
+  ActorSystem(Root(), "demo", config)
 }
