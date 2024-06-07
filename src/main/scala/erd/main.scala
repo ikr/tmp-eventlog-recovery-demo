@@ -29,7 +29,9 @@ def startup(role: String, portDelta: Int): Unit = {
 
   val system   = ActorSystem(Root(), "demo", config)
   val sharding = ClusterSharding(system)
-  sharding.init(Entity(EchoTypeKey)(createBehavior = _ => MemorizingEcho()).withRole("Provider"))
+  sharding.init(
+    Entity(EchoTypeKey)(createBehavior = entityContext => MemorizingEcho(entityContext.entityId)).withRole("Provider")
+  )
 }
 
 private val EchoTypeKey = EntityTypeKey[MemorizingEcho.Command]("Echo")

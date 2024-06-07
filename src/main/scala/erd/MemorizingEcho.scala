@@ -17,14 +17,14 @@ object MemorizingEcho {
 
   private final case class State(history: Seq[String])
 
-  def apply(): Behavior[Command] =
+  def apply(entityId: String): Behavior[Command] =
     EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId.ofUniqueId("observer"),
+      persistenceId = PersistenceId.ofUniqueId(entityId),
       emptyState = State(Seq()),
       commandHandler = commandHandler,
       eventHandler = eventHandler
     ).onPersistFailure(
-      SupervisorStrategy.restartWithBackoff(minBackoff = 2.seconds, maxBackoff = 8.minutes, randomFactor = 0.1)
+      SupervisorStrategy.restartWithBackoff(minBackoff = 2.seconds, maxBackoff = 4.minutes, randomFactor = 0.1)
     )
 
   private def commandHandler: EventSourcedBehavior.CommandHandler[Command, Event, State] = (state, command) =>
