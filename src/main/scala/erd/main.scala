@@ -1,7 +1,8 @@
 package erd
 
-import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.persistence.jdbc.testkit.scaladsl.SchemaUtils
 import com.typesafe.config.ConfigFactory
 
@@ -17,5 +18,7 @@ object Root {
   }
 }
 
-@main def run(): Unit =
-  ActorSystem(Root(), "demo", config = ConfigFactory.load("app.conf"))
+@main def run(): Unit = {
+  val system   = ActorSystem(Root(), "demo", config = ConfigFactory.load("cluster.conf"))
+  val sharding = ClusterSharding(system)
+}
