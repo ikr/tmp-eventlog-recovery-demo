@@ -2,6 +2,7 @@ package erd
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import com.typesafe.config.ConfigFactory
 
 object Root {
@@ -19,7 +20,6 @@ object Root {
 
 def startup(role: String, portDelta: Int): Unit = {
   val port = 10_000 + portDelta
-  // Override the configuration of the port
   val config = ConfigFactory
     .parseString(s"""
          |akka.cluster.roles = ["$role"]
@@ -27,6 +27,9 @@ def startup(role: String, portDelta: Int): Unit = {
          |""".stripMargin)
     .withFallback(ConfigFactory.load("cluster.conf"))
 
-  // Create an Akka system
-  ActorSystem(Root(), "demo", config)
+  val system   = ActorSystem(Root(), "demo", config)
+  val sharding = ClusterSharding(system)
+  sharding.init(Entity(EchoTypeKey)(createBehavior = _ => MemorizingEcho()).withRole("Provider"))
 }
+
+private val EchoTypeKey = EntityTypeKey[MemorizingEcho.Command]("Echo")
