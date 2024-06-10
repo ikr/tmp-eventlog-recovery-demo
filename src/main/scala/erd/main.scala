@@ -2,6 +2,8 @@ package erd
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import akka.cluster.sharding.typed.ClusterShardingSettings
+import akka.cluster.sharding.typed.ClusterShardingSettings.PassivationStrategySettings
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.persistence.jdbc.testkit.scaladsl.SchemaUtils
 import com.typesafe.config.ConfigFactory
@@ -37,11 +39,24 @@ def startup(role: String, portDelta: Int): Unit = {
          |""".stripMargin)
     .withFallback(ConfigFactory.load("cluster.conf"))
 
-  val system   = ActorSystem(Root(role), "demo", config)
-  val sharding = ClusterSharding(system)
+  val system              = ActorSystem(Root(role), "demo", config)
+  val sharding            = ClusterSharding(system)
+  val defaultSettings     = ClusterShardingSettings(system)
+  val passivationSettings = withDisablePassivation(defaultSettings.passivationStrategySettings)
+
   sharding.init(
-    Entity(EchoTypeKey)(createBehavior = entityContext => MemorizingEcho(entityContext.entityId)).withRole("Provider")
+    Entity(EchoTypeKey)(createBehavior = entityContext => MemorizingEcho(entityContext.entityId))
+      .withSettings(defaultSettings.withPassivationStrategy(passivationSettings))
+      .withRole("Provider")
   )
 }
+
+private def withDisablePassivation(oldSettings: PassivationStrategySettings): PassivationStrategySettings =
+  new PassivationStrategySettings(
+    idleEntitySettings = None,
+    activeEntityLimit = oldSettings.activeEntityLimit,
+    replacementPolicySettings = oldSettings.replacementPolicySettings,
+    admissionSettings = oldSettings.admissionSettings
+  )
 
 private val EchoTypeKey = EntityTypeKey[MemorizingEcho.Command]("Echo")
