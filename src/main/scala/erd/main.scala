@@ -14,7 +14,7 @@ object Root {
     context.spawn(ClusterListener(), "ClusterListener")
 
     if (role == "Consumer") {
-      Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 2.seconds)
+      Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 8.seconds)
       context.spawn(Clock(), "clock")
     }
 
