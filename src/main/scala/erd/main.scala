@@ -12,10 +12,12 @@ import scala.concurrent.duration.DurationInt
 object Root {
   def apply(role: String): Behavior[Unit] = Behaviors.setup { context =>
     context.spawn(ClusterListener(), "ClusterListener")
-    Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 2.seconds)
+
     if (role == "Consumer") {
+      Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 2.seconds)
       context.spawn(Clock(), "clock")
     }
+
     Behaviors.same
   }
 }
