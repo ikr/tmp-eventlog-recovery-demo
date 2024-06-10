@@ -6,8 +6,11 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import com.typesafe.config.ConfigFactory
 
 object Root {
-  def apply(): Behavior[Unit] = Behaviors.setup { context =>
+  def apply(role: String): Behavior[Unit] = Behaviors.setup { context =>
     context.spawn(ClusterListener(), "ClusterListener")
+    if (role == "Consumer") {
+      context.spawn(Clock(), "clock")
+    }
     Behaviors.same
   }
 }
@@ -27,7 +30,7 @@ def startup(role: String, portDelta: Int): Unit = {
          |""".stripMargin)
     .withFallback(ConfigFactory.load("cluster.conf"))
 
-  val system   = ActorSystem(Root(), "demo", config)
+  val system   = ActorSystem(Root(role), "demo", config)
   val sharding = ClusterSharding(system)
   sharding.init(
     Entity(EchoTypeKey)(createBehavior = entityContext => MemorizingEcho(entityContext.entityId)).withRole("Provider")
