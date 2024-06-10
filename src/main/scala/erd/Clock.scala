@@ -17,7 +17,7 @@ object Clock {
   def apply(): Behavior[Message] = setup()
 
   private def setup(): Behavior[Message] = Behaviors.withTimers { timers =>
-    timers.startTimerWithFixedDelay(Tick, 10.seconds)
+    timers.startTimerWithFixedDelay(Tick, 4.minutes)
     receive()
   }
 

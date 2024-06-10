@@ -3,11 +3,16 @@ package erd
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
+import akka.persistence.jdbc.testkit.scaladsl.SchemaUtils
 import com.typesafe.config.ConfigFactory
+
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 object Root {
   def apply(role: String): Behavior[Unit] = Behaviors.setup { context =>
     context.spawn(ClusterListener(), "ClusterListener")
+    Await.result(SchemaUtils.createIfNotExists()(context.system.classicSystem), 2.seconds)
     if (role == "Consumer") {
       context.spawn(Clock(), "clock")
     }
