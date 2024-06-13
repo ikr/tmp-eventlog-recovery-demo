@@ -17,8 +17,11 @@ object Clock {
   def apply(): Behavior[Message] = setup()
 
   private def setup(): Behavior[Message] = Behaviors.withTimers { timers =>
-    timers.startTimerWithFixedDelay(Tick, 4.minutes)
-    receive()
+    timers.startTimerWithFixedDelay(Tick, 3.minutes)
+    Behaviors.setup { context =>
+      context.self ! Tick
+      receive()
+    }
   }
 
   private def receive(): Behavior[Message] = Behaviors.receive { (context, message) =>

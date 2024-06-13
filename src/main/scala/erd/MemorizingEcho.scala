@@ -24,7 +24,7 @@ object MemorizingEcho {
       commandHandler = commandHandler,
       eventHandler = eventHandler
     ).onPersistFailure(
-      SupervisorStrategy.restartWithBackoff(minBackoff = 2.seconds, maxBackoff = 4.minutes, randomFactor = 0.1)
+      SupervisorStrategy.restartWithBackoff(minBackoff = 1.seconds, maxBackoff = 10.seconds, randomFactor = 0.1)
     )
 
   private def commandHandler: EventSourcedBehavior.CommandHandler[Command, Event, State] = (state, command) =>
