@@ -27,7 +27,7 @@ object Clock {
   private def receive(): Behavior[Message] = Behaviors.receive { (context, message) =>
     message match {
       case Tick =>
-        given Timeout = Timeout(16.seconds)
+        given Timeout = Timeout(2.seconds)
         val sharding  = ClusterSharding(context.system)
         val f         = recipient(sharding).ask(me => MemorizingEcho.Signal(System.currentTimeMillis().toString, me))
         context.pipeToSelf(f) {
