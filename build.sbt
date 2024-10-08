@@ -4,7 +4,7 @@ ThisBuild / scalaVersion := "3.4.2"
 
 val AkkaJdbcVersion       = "5.4.1"
 val AkkaManagementVersion = "1.5.2"
-val AkkaVersion           = "2.9.3"
+val AkkaVersion           = "2.9.4"
 val LogbackVersion        = "1.5.6"
 val PostgresVersion       = "42.7.3"
 val SlickVersion          = "3.5.1"
